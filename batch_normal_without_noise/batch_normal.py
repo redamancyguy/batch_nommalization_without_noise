@@ -25,7 +25,7 @@ learning_rate = 0.3
 # learning_rate = 0.00001
 
 
-batch_size = 50
+batch_size = 150
 batch_pointer = 0
 sample_count = len(x)
 shu_in = np.random.choice(np.arange(sample_count), size=sample_count, replace=False)

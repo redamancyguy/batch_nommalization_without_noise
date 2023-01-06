@@ -15,15 +15,9 @@ import tensorflow as tf
 degree = 2
 poly = PolynomialFeatures(degree, include_bias=False)
 
-x_bias = -1
-y_bias = 10000
-x = np.linspace(-10, 10, 1000).reshape((-1, 1)) + x_bias
-y = x ** 2 + 3 * x + y_bias
+from data_set_file import get_batch_normal_dataset
 
-# x = np.random.randint(0, 100, 1000).reshape((-1, 1))
-# x.sort(axis=0)
-# x += x_bias
-# y = np.linspace(0, len(x) - 1, len(x)).reshape((-1,1)) + y_bias
+x, y = get_batch_normal_dataset()
 
 w = np.random.random(degree).reshape((-1, 1))
 b = np.zeros((1,1))
@@ -38,7 +32,7 @@ std_y.fit(y)
 
 print(std_y.mean_)
 print(np.sqrt(std_y.var_))
-batch_size = 50
+batch_size = 150
 batch_pointer = 0
 sample_count = len(x)
 shu_in = np.random.choice(np.arange(sample_count), size=sample_count, replace=False)
