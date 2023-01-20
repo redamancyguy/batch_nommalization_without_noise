@@ -9,18 +9,19 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
 from test2 import StandMyself
+
 plt.ion()
 
 from data_set_file import get_batch_normal_dataset
 
-x, y = get_batch_normal_dataset(True)
+x, y = get_batch_normal_dataset()
 np.random.seed(123)
-degree = 1
+degree = 2
 poly = PolynomialFeatures(degree, include_bias=False)
 w = np.random.random(degree).reshape((-1, 1))
 b = np.zeros((1, 1))
 
-learning_rate = 0.1
+learning_rate = 1
 number_of_samples_in_a_batch = 5
 batch_size = 50
 batch_pointer = 0
@@ -42,7 +43,6 @@ for _ in range(1000):
         x_batch = x[batch_pointer: batch_pointer + batch_size]
         y_batch = y[batch_pointer: batch_pointer + batch_size]
         batch_pointer += batch_size
-    x_batch = poly.transform(x_batch)
     # a standardScalar for this new batch
     std_x = StandMyself()
     std_x.fit(x_batch)
@@ -85,13 +85,14 @@ for _ in range(1000):
 
     # 从parameter中抽取出来 标准化 参数
     # scrape the influence from the model about the new parameter for standardization
-    b = (b + np.dot(std_x.mean_, w) - std_y.mean_) / np.sqrt(std_y.var_.reshape(1))
+    b = (b + std_x.mean_ * np.sum(w) - std_y.mean_) / np.sqrt(std_y.var_.reshape(1))
 
-    w = w * np.sqrt(std_x.var_.reshape(w.shape)) / np.sqrt(std_y.var_.reshape(1))
+    w = w * np.sqrt(std_x.var_.reshape((1, 1))) / np.sqrt(std_y.var_.reshape(1))
 
-    for __ in range(1):
+    for __ in range(batch_size):
         plt.cla()
         x_train = x_batch[__, :].reshape((1, -1))
+        x_train = poly.transform(x_train)
         y_train = y_batch[__, :].reshape((1, -1))
         prediction = np.dot(x_train, w) + b
         residual_error = prediction - y_train
@@ -103,8 +104,8 @@ for _ in range(1000):
 
         plt.scatter(x, y, color='purple')
         x_for_prediction = np.linspace(np.min(x), np.max(x), 100).reshape((-1, 1))
-        x_for_prediction = poly.fit_transform(x_for_prediction)
         x_for_prediction = std_x.transform(x_for_prediction)
+        x_for_prediction = poly.fit_transform(x_for_prediction)
         pred = np.dot(x_for_prediction, w) + b
         plt.plot(np.linspace(np.min(x), np.max(x), 100).reshape((-1, 1)),
                  std_y.inverse_transform(pred),
@@ -115,12 +116,8 @@ for _ in range(1000):
         if __ == batch_size - 1:
             pass
     # integrate parameters into the model
-    b = b * np.sqrt(std_y.var_.reshape(1)) + std_y.mean_.reshape(1) \
-        - np.sqrt(std_y.var_) * np.dot(w.T, (std_x.mean_.reshape(w.shape) / np.sqrt(std_x.var_.reshape(w.shape))))
+    b = b * np.sqrt(std_y.var_.reshape(1)) + std_y.mean_.reshape(1) - np.sqrt(std_y.var_) * np.sum(w), (std_x.mean_ / np.sqrt(std_x.var_))
 
-    w = w / np.sqrt(std_x.var_.reshape(w.shape)) * np.sqrt(std_y.var_.reshape(1))
+    w = w / np.sqrt(std_x.var_) * np.sqrt(std_y.var_.reshape(1))
 
     print('iteration:', _, 'w', w.flatten(), 'b', b)
-
-
-

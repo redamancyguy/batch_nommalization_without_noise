@@ -1,13 +1,15 @@
 import numpy as np
 
 
-def get_batch_normal_dataset():
+def get_batch_normal_dataset(add_noise = False):
     x_bias = -15
     x = np.linspace(-100, 100, 1000).reshape((-1, 1)) + x_bias
-    y = 100 * x ** 2 + 3000 * x
+    # y = 100 * x ** 2 + 3000 * x
+    y = 3000 * x + 100
 
     y += np.max(np.abs(y)) / 2
-    # y += np.random.random(1000).reshape(x.shape) * (np.max(y) - np.min(y)) * 0.05
+    if add_noise:
+        y += np.random.random(1000).reshape(x.shape) * (np.max(y) - np.min(y)) * 0.05
     return x, y
 
 

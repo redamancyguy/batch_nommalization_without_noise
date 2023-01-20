@@ -8,21 +8,22 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
-from test2 import StandMyself
+from my_utils_for_study import StandMyself, re_standardization
+from my_utils_for_study import get_batch_normal_dataset
+from my_utils_for_study import get_mean_and_variance
+
 plt.ion()
 
-from data_set_file import get_batch_normal_dataset
-
-x, y = get_batch_normal_dataset(True)
+x, y = get_batch_normal_dataset()
 np.random.seed(123)
-degree = 1
+degree = 2
 poly = PolynomialFeatures(degree, include_bias=False)
 w = np.random.random(degree).reshape((-1, 1))
 b = np.zeros((1, 1))
 
-learning_rate = 0.1
+learning_rate = 0.01
 number_of_samples_in_a_batch = 5
-batch_size = 50
+batch_size = 5
 batch_pointer = 0
 sample_quantity = len(x)
 # did not random disrupt the data x and y. There is a synthetic data ordered,then we make a bad batch
@@ -32,7 +33,12 @@ sample_quantity = len(x)
 # y = y[shu_in]
 user_self_made_standardScalar = True
 poly.fit(x)
-for _ in range(1000):
+
+
+
+
+
+for _ in range(10000):
     # draw a batch from all samples
     if batch_size + batch_pointer > sample_quantity:
         x_batch = np.vstack((x[batch_pointer:], x[:batch_pointer + batch_size - sample_quantity]))
@@ -52,10 +58,8 @@ for _ in range(1000):
     user_self_made_standardScalar = True
     # 手动计算方差和均值
     if user_self_made_standardScalar:
-        from test_var_getting import get_mean_and_variance
-
         mean_x, var_x = get_mean_and_variance(x_batch)
-        # mean_y, var_y = get_mean_and_variance(y_batch)
+        mean_y, var_y = get_mean_and_variance(y_batch)
         #
         # std_x.mean_ = mean_x
         # std_x.var_ = var_x
@@ -85,19 +89,17 @@ for _ in range(1000):
 
     # 从parameter中抽取出来 标准化 参数
     # scrape the influence from the model about the new parameter for standardization
-    b = (b + np.dot(std_x.mean_, w) - std_y.mean_) / np.sqrt(std_y.var_.reshape(1))
+    w,b = re_standardization.scrape_out(w,b,std_x,std_y)
 
-    w = w * np.sqrt(std_x.var_.reshape(w.shape)) / np.sqrt(std_y.var_.reshape(1))
-
-    for __ in range(1):
+    for __ in range(batch_size):
         plt.cla()
         x_train = x_batch[__, :].reshape((1, -1))
         y_train = y_batch[__, :].reshape((1, -1))
         prediction = np.dot(x_train, w) + b
         residual_error = prediction - y_train
 
-        dl_dw = learning_rate * (1 / batch_size) * np.dot(x_train.T, residual_error)
-        dl_db = learning_rate * (1 / batch_size) * residual_error
+        dl_dw = learning_rate * np.dot(x_train.T, residual_error)
+        dl_db = learning_rate * residual_error
         w = w - dl_dw
         b = b - dl_db
 
@@ -115,12 +117,6 @@ for _ in range(1000):
         if __ == batch_size - 1:
             pass
     # integrate parameters into the model
-    b = b * np.sqrt(std_y.var_.reshape(1)) + std_y.mean_.reshape(1) \
-        - np.sqrt(std_y.var_) * np.dot(w.T, (std_x.mean_.reshape(w.shape) / np.sqrt(std_x.var_.reshape(w.shape))))
-
-    w = w / np.sqrt(std_x.var_.reshape(w.shape)) * np.sqrt(std_y.var_.reshape(1))
+    w,b = re_standardization.integrate_in(w,b,std_x,std_y)
 
     print('iteration:', _, 'w', w.flatten(), 'b', b)
-
-
-

@@ -16,5 +16,4 @@ standard parameters of x and y called x_mean,y_mean,x_sigma,y_sigma
 * After training,we integrate parameters into the model.
 
 ## full process
-
-![IMG_0170.PNG](..%2FIMG_0170.PNG)
+![img.png](img.png)
